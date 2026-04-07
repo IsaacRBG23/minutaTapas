@@ -1,0 +1,5 @@
+{
+  "name": "Cargador de Excel",
+  "description": "Una interfaz intuitiva para cargar y previsualizar archivos Excel.",
+  "requestFramePermissions": []
+}
