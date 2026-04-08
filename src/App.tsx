@@ -102,16 +102,14 @@ export default function App() {
 
   const loadSheetData = (wb: xlsx.WorkBook, sheetName: string) => {
     const worksheet = wb.Sheets[sheetName];
+    const jsonData = xlsx.utils.sheet_to_json(worksheet, { header: 1, defval: '' }) as any[][];
     
-    // Extraer folio de la celda I3
-    const cellI3 = worksheet['I3'];
-    if (cellI3 && (cellI3.v !== undefined || cellI3.w !== undefined)) {
-      setFolio(String(cellI3.v !== undefined ? cellI3.v : cellI3.w).trim());
+    // Extraer folio de la celda I3 (Fila 3, Columna I) -> índice 2 y 8
+    if (jsonData.length > 2 && jsonData[2][8] !== undefined && jsonData[2][8] !== '') {
+      setFolio(String(jsonData[2][8]).trim());
     } else {
       setFolio('S/N');
     }
-
-    const jsonData = xlsx.utils.sheet_to_json(worksheet, { header: 1, defval: '' }) as any[][];
     
     // La tabla comienza en B6 (fila 6, índice 5) hasta I6 (columna B es índice 1, I es índice 8)
     if (jsonData.length > 5) {
@@ -283,11 +281,11 @@ export default function App() {
         bodyStyles: { fontSize: 8, minCellHeight: 6, textColor: [0, 0, 0], lineWidth: 0.1, lineColor: [0, 0, 0], halign: 'center' },
         columnStyles: {
           0: { cellWidth: 10, halign: 'center' },
-          1: { cellWidth: 20, halign: 'center' },
+          1: { cellWidth: 12, halign: 'center' },
           2: { cellWidth: 15, halign: 'center' },
           3: { cellWidth: 45, halign: 'center' },
           4: { cellWidth: 20, halign: 'center' },
-          5: { cellWidth: 15, halign: 'center' },
+          5: { cellWidth: 23, halign: 'center' },
           6: { cellWidth: 20, halign: 'center' },
           7: { cellWidth: 'auto', halign: 'center' }
         },
