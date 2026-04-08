@@ -20,6 +20,7 @@ export default function App() {
   const [sheetNames, setSheetNames] = useState<string[]>([]);
   const [selectedSheet, setSelectedSheet] = useState<string>('');
   const [selectedDate, setSelectedDate] = useState<string>('');
+  const [folio, setFolio] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -101,6 +102,15 @@ export default function App() {
 
   const loadSheetData = (wb: xlsx.WorkBook, sheetName: string) => {
     const worksheet = wb.Sheets[sheetName];
+    
+    // Extraer folio de la celda I3
+    const cellI3 = worksheet['I3'];
+    if (cellI3 && (cellI3.v !== undefined || cellI3.w !== undefined)) {
+      setFolio(String(cellI3.v !== undefined ? cellI3.v : cellI3.w).trim());
+    } else {
+      setFolio('S/N');
+    }
+
     const jsonData = xlsx.utils.sheet_to_json(worksheet, { header: 1, defval: '' }) as any[][];
     
     // La tabla comienza en B6 (fila 6, índice 5) hasta I6 (columna B es índice 1, I es índice 8)
@@ -170,6 +180,31 @@ export default function App() {
     return strVal;
   };
 
+  const formatKm = (val: any) => {
+    if (val === undefined || val === null || String(val).trim() === '') return '';
+    
+    const strVal = String(val).replace(/,/g, '');
+    const numVal = Number(strVal);
+    
+    if (isNaN(numVal)) return String(val);
+
+    const isNegative = numVal < 0;
+    const absVal = Math.abs(numVal);
+    
+    const thousands = Math.floor(absVal / 1000);
+    const remainder = absVal % 1000;
+    
+    const thousandsStr = String(thousands).padStart(2, '0');
+    
+    const remainderParts = remainder.toFixed(2).split('.');
+    const remainderInt = remainderParts[0].padStart(3, '0');
+    const remainderDec = remainderParts[1];
+    
+    const sign = isNegative ? '-' : '';
+    
+    return `${sign}${thousandsStr}+${remainderInt}.${remainderDec}`;
+  };
+
   const generatePDF = () => {
     const doc = new jsPDF();
     const tableColumn = ['N°', 'Fecha', 'Cod', 'Vialidad', 'Sección', 'Km', 'Carril', 'Falla'];
@@ -207,7 +242,7 @@ export default function App() {
       // Folio / ID
       doc.setTextColor(200, 0, 0);
       doc.setFontSize(14);
-      doc.text('E-0465', 195, 20, { align: 'right' });
+      doc.text(folio, 195, 20, { align: 'right' });
       
       // Header Text
       doc.setTextColor(0, 0, 0);
@@ -226,7 +261,7 @@ export default function App() {
             row[2] !== undefined ? String(row[2]) : '', // Cod (D)
             row[3] !== undefined ? String(row[3]) : '', // Vialidad (E)
             row[4] !== undefined ? String(row[4]) : '', // Sección (F)
-            row[5] !== undefined ? String(row[5]) : '', // Km (G)
+            formatKm(row[5]), // Km (G)
             row[6] !== undefined ? String(row[6]) : '', // Carril (H)
             row[7] !== undefined ? String(row[7]) : ''  // Falla (I)
           ]);
@@ -284,7 +319,8 @@ export default function App() {
       });
     });
 
-    doc.save('Minuta_de_Trabajo_E-0465.pdf');
+    const safeFolio = folio ? folio.replace(/[\s\/\\]/g, '_') : 'S_N';
+    doc.save(`Minuta_de_Trabajo_${safeFolio}.pdf`);
   };
 
   const resetState = () => {
@@ -292,6 +328,7 @@ export default function App() {
     setWorkbook(null);
     setSheetNames([]);
     setSelectedSheet('');
+    setFolio('');
     setDataPreview([]);
     setFullData([]);
     setColumns([]);
